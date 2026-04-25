@@ -59,6 +59,9 @@ func NewRootCommand() *cobra.Command {
 		newExamplesCommand(v),
 		newCompletionCommand(),
 		newManCommand(),
+		newConfigCommand(v),
+		newAuthCommand(v),
+		newKeyCommand(v),
 	)
 	return root
 }
