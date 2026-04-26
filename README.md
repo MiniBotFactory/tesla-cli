@@ -27,6 +27,25 @@ tesla
 
 ## 安装
 
+### 通过 npm(推荐 — 单条命令)
+
+```bash
+npm install -g tesla-cli-cn
+tesla --help
+```
+
+postinstall 自动从 GitHub Releases 下你机器对应平台的二进制。
+**国内用户**网络差时设镜像(任选其一):
+
+```bash
+TESLA_CLI_MIRROR=https://ghfast.top  npm install -g tesla-cli-cn
+TESLA_CLI_MIRROR=https://gh-proxy.com npm install -g tesla-cli-cn
+```
+
+下载失败会自动重试 3 次(2s / 4s / 8s 退避)。
+
+### 从源码编译
+
 ```bash
 git clone git@github.com:MiniBotFactory/tesla-cli.git
 cd tesla-cli
