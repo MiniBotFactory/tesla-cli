@@ -1,0 +1,74 @@
+# GoReleaser v2 配置
+#
+# 本地 dry-run:  goreleaser release --snapshot --clean
+# CI 真实 release:git tag v0.1.0 && git push origin v0.1.0
+version: 2
+
+project_name: tesla
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: tesla
+    main: ./cmd/tesla
+    binary: tesla
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath        # 不暴露开发机绝对路径
+    ldflags:
+      - -s -w
+      - -X github.com/wmango/tesla-cli/internal/meta.Version={{.Version}}
+      - -X github.com/wmango/tesla-cli/internal/meta.Commit={{.ShortCommit}}
+      - -X github.com/wmango/tesla-cli/internal/meta.BuildDate={{.Date}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64    # 暂跳过(用户少 + 避免冗余)
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    # 命名固定:tesla_v0.1.0_darwin_arm64.tar.gz
+    # scripts/install.js 按这个 pattern 拼 URL,不要随意改。
+    name_template: "tesla_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE*
+      - README.md
+
+checksum:
+  name_template: "tesla_{{ .Tag }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "Merge pull request"
+
+# release target(owner/repo)从 git remote 自动推断,不硬编码 —
+# 切到 release-only 仓库时只需改 git remote,不用动这里。
+release:
+  prerelease: auto
+  draft: false
+  name_template: "tesla-cli {{.Tag}}"

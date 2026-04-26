@@ -1,0 +1,50 @@
+{
+  "name": "tesla-cli-cn",
+  "version": "0.1.0",
+  "description": "Tesla Fleet API command line tool — Agent-friendly with semantic exit codes, JSON envelopes, PKCE OAuth, and EC P-256 signed vehicle commands. Tested live against Tesla CN.",
+  "homepage": "https://github.com/MiniBotFactory/tesla-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiniBotFactory/tesla-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MiniBotFactory/tesla-cli/issues"
+  },
+  "license": "MIT",
+  "author": "wmango <wmango@hotmail.com>",
+  "keywords": [
+    "tesla",
+    "fleet-api",
+    "cli",
+    "oauth",
+    "ev",
+    "automation",
+    "agent",
+    "vehicle-command",
+    "tesla-cn"
+  ],
+  "bin": {
+    "tesla": "bin/tesla.js"
+  },
+  "files": [
+    "bin/tesla.js",
+    "scripts/install.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

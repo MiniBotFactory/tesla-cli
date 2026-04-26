@@ -1,5 +1,7 @@
 # 构建产物
-bin/
+bin/tesla
+bin/tesla.exe
+bin/archive.*
 dist/
 manpages/
 completions/
