@@ -56,6 +56,44 @@ var docTopics = map[string]string{
   8  Tesla 5xx
   9  超时
   10 限流`,
+
+	"cn-notes": `Tesla 中国大陆账号联调差异(实测 2026-04 通过):
+
+1. 开发者门户分开
+   • 全球:https://developer.tesla.com
+   • 中国:https://developer.tesla.cn(单独账号,需 +86 手机号)
+   两边的 client_id 互不通用。在 .com 注册的 client 用 cn 端点会
+   "client_not_found"。
+
+2. OAuth 端点不在 fleet-auth 子域,直接在 auth.tesla.cn 主域:
+     authorize: https://auth.tesla.cn/oauth2/v3/authorize
+     token:     https://auth.tesla.cn/oauth2/v3/token
+     api base:  https://fleet-api.prd.cn.vn.cloud.tesla.cn
+     OIDC:      https://auth.tesla.cn/oauth2/v3/.well-known/openid-configuration
+   猜测过的 fleet-auth.prd.vn.cloud.tesla.cn 不存在(SSL 直拒)。
+
+3. Akamai WAF 反爬
+   auth.tesla.cn 前面是 Akamai。它对 User-Agent 含 "(+https://...)" 形态
+   的请求直接 403 Access Denied(返回 errors.edgesuite.net)。本 CLI 已把
+   UA 改为简短 "tesla-cli/0.0"。如要换 UA,避开类爬虫指纹。
+
+4. client_credentials grant 的 scope
+   CN client 用 client_credentials 拿 partner token 时,响应里 scope 字段
+   缺失,CLI 的 Token.Scopes 会是 nil(预期行为)。openid 单 scope 即可。
+
+5. authorization_code grant
+   redirect_uri 通常是生产域名(例如 https://your-domain.cn/code),不是
+   localhost。CLI 自动切到 manual paste 模式:把浏览器跳到的完整 URL
+   或 "code state" 字符串粘到 stdin。
+
+6. partner_accounts/public_key 验证(verify)报 "missing scopes"
+   CN region 这个端点要求额外 scope,目前不影响主流程。register 成功
+   后 response 已含 public_key_hash,等同确认入账。
+
+7. 命令调整
+   • --region cn(也可写在 config.toml,推荐)
+   • domain 字段填 host(不带 https://),如 your.example.cn
+   • 公钥仍部署到 https://<domain>/.well-known/appspecific/com.tesla.3p.public-key.pem`,
 }
 
 const docsLong = `离线查看长文档主题。
