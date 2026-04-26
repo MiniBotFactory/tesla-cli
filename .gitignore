@@ -33,3 +33,8 @@ testdata/cache/
 # 一次性 reproducer / 诊断小程序(Go 工具链已忽略下划线前缀目录,这里再保险一道)
 cmd/_*/
 
+# 真车敏感信息黑名单(本地 only,公仓库永不持有真值字符串)
+# 测试代码读这个文件扫 testdata/*.json 是否退化回真值;
+# 文件不存在时测试自动 t.Skip(CI/fork 不受影响)。
+**/.forbidden_strings
+

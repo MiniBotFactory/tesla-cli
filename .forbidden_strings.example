@@ -1,0 +1,22 @@
+# tesla-cli — 本地真值黑名单(模板)
+#
+# 用途
+#   internal/{auth,client}/fixture_test.go 的 TestFixturesDoNotLeakSecrets
+#   读这个文件,扫 testdata/*.json 是否含真值字符串,防止 fixture 在
+#   future commit 中退化回真车数据。
+#
+# 使用
+#   1. cp .forbidden_strings.example .forbidden_strings
+#   2. 把每行 #FIXME 替换为你的真值(去掉 #FIXME 前缀)
+#   3. .gitignore 已排除 .forbidden_strings,绝不会进 commit
+#
+# 文件不存在时,测试自动 t.Skip(CI / fork / 公仓库都不会失败)。
+#
+# 推荐放入的字段(每行一个,字符串采用子串匹配):
+#FIXME <YOUR-REAL-VIN>                  17 字符
+#FIXME <YOUR-CLIENT-ID-PREFIX>          Tesla developer App 的 client_id 前 16 字符
+#FIXME <YOUR-ACCOUNT-ID-PREFIX>         partner register 返回的 account_id 前缀
+#FIXME <YOUR-CLIENT-SECRET-PREFIX>      client_secret 前缀(如 "ta-secret.")
+#FIXME <YOUR-CAR-DISPLAY-NAME>          Tesla App 里的车昵称
+#FIXME <YOUR-WALL-CONNECTOR-SERIAL>     家充桩 serial 前缀
+#FIXME <YOUR-VEHICLE-ID>                Tesla 内部 vehicle_id (数字)

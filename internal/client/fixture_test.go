@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -92,15 +93,13 @@ func TestListProducts_realFixture(t *testing.T) {
 }
 
 // TestClientFixtures_noLeakedSecrets 守住 fixture 永不退化回真车。
+//
+// 真值黑名单从仓库根 .forbidden_strings 读取(本地 only,.gitignore 排除)。
+// 文件不存在时 t.Skip,保证 CI / fork / 公仓库不持有真值字符串。
 func TestClientFixtures_noLeakedSecrets(t *testing.T) {
-	forbidden := []string{
-		"LRW0000000000000",
-		"f2ec4168-78cf-495b",
-		"f8cc0757-4fc6-4f59",
-		"ta-secret.",
-		"Test Car",
-		"STE20240907",
-		"9876543210987654",
+	forbidden, err := loadForbiddenStrings()
+	if err != nil {
+		t.Skipf("no .forbidden_strings (%v); skipping leak-scan", err)
 	}
 	matches, err := filepath.Glob("testdata/*.json")
 	if err != nil {
@@ -115,4 +114,25 @@ func TestClientFixtures_noLeakedSecrets(t *testing.T) {
 			}
 		}
 	}
+}
+
+// loadForbiddenStrings 从仓库根 .forbidden_strings 读取每行一个真值子串。
+// 与 internal/auth 中同名函数行为一致(各包独立实现以保持 testdata 自包含)。
+func loadForbiddenStrings() ([]string, error) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", ".forbidden_strings"))
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, line := range strings.Split(string(raw), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		out = append(out, line)
+	}
+	if len(out) == 0 {
+		return nil, errors.New(".forbidden_strings has no entries")
+	}
+	return out, nil
 }

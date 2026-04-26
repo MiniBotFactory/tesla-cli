@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -51,15 +52,13 @@ func TestPostToken_realCNTokenShape(t *testing.T) {
 }
 
 // TestFixturesDoNotLeakSecrets 静态扫描 testdata,确保未来 fixture 不漏敏。
+//
+// 真值黑名单从仓库根 .forbidden_strings 读取(本地 only,.gitignore 排除)。
+// 文件不存在时 t.Skip,以便 CI / fork / 公仓库不持有真值字符串。
 func TestFixturesDoNotLeakSecrets(t *testing.T) {
-	forbidden := []string{
-		"LRW0000000000000",  // 真 VIN
-		"f2ec4168-78cf-495b", // 真 client_id 前缀
-		"f8cc0757-4fc6-4f59", // 真 account_id 前缀
-		"ta-secret.",         // 真 client_secret 前缀
-		"Test Car",              // 真 display_name
-		"STE20240907",        // 真 wall_connector serial
-		"9876543210987654",   // 真 vehicle_id
+	forbidden, err := loadForbiddenStrings()
+	if err != nil {
+		t.Skipf("no .forbidden_strings (%v); skipping leak-scan", err)
 	}
 	matches, err := filepath.Glob("testdata/*.json")
 	if err != nil {
@@ -74,4 +73,26 @@ func TestFixturesDoNotLeakSecrets(t *testing.T) {
 			}
 		}
 	}
+}
+
+// loadForbiddenStrings 从仓库根 .forbidden_strings 读取每行一个真值子串。
+// 注释行(# 开头)与空行被忽略。
+func loadForbiddenStrings() ([]string, error) {
+	// 测试 cwd 是 internal/auth;仓库根上溯两级。
+	raw, err := os.ReadFile(filepath.Join("..", "..", ".forbidden_strings"))
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, line := range strings.Split(string(raw), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		out = append(out, line)
+	}
+	if len(out) == 0 {
+		return nil, errors.New(".forbidden_strings has no entries")
+	}
+	return out, nil
 }
