@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: go test -race + vet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt check
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::Files need gofmt:"
+            echo "$out"
+            exit 1
+          fi
+
+      - name: go test -race -cover
+        run: go test -race -cover ./...
+
+      - name: Build all binaries (matrix-lite)
+        run: |
+          for goos in linux darwin windows; do
+            for goarch in amd64 arm64; do
+              if [ "$goos/$goarch" = "windows/arm64" ]; then continue; fi
+              echo "::group::build $goos/$goarch"
+              GOOS=$goos GOARCH=$goarch go build -o /tmp/tesla-$goos-$goarch ./cmd/tesla
+              echo "::endgroup::"
+            done
+          done
+
+  npm-shim-syntax:
+    name: node --check JS shim + install script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate package.json
+        run: node -e "require('./package.json')"
+
+      - name: Validate JS shim
+        run: node --check bin/tesla.js
+
+      - name: Validate install script
+        run: node --check scripts/install.js

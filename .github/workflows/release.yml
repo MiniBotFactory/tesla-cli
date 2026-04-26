@@ -1,0 +1,57 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write       # GoReleaser 需要权限创建 GitHub Releases
+
+jobs:
+  release:
+    name: GoReleaser + npm publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # GoReleaser 需要完整 git history 生成 changelog
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GoReleaser 已把 archive 上传到 GitHub Releases。
+      # 现在让 npm 包的 version 与 git tag 对齐,然后 npm publish。
+      # tag v0.1.0 → npm version 0.1.0
+      - name: Sync npm version with git tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "Aligning package.json version with tag: $TAG"
+          npm version "$TAG" --no-git-tag-version --allow-same-version
+
+      - name: npm publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
