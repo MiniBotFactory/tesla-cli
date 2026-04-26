@@ -1,5 +1,11 @@
 # tesla-cli-cn
 
+[![npm version](https://img.shields.io/npm/v/tesla-cli-cn.svg?logo=npm&color=cb3837)](https://www.npmjs.com/package/tesla-cli-cn)
+[![GitHub release](https://img.shields.io/github/v/release/MiniBotFactory/tesla-cli?logo=github&color=2ea44f)](https://github.com/MiniBotFactory/tesla-cli/releases/latest)
+[![CI](https://github.com/MiniBotFactory/tesla-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/MiniBotFactory/tesla-cli/actions/workflows/ci.yml)
+[![Go version](https://img.shields.io/github/go-mod/go-version/MiniBotFactory/tesla-cli?logo=go)](https://github.com/MiniBotFactory/tesla-cli/blob/main/go.mod)
+[![License](https://img.shields.io/github/license/MiniBotFactory/tesla-cli?color=blue)](LICENSE)
+
 Tesla Fleet API 命令行工具 — **为 Agent 调用而生**。
 
 - 默认 JSON 输出,stderr 仅日志,退出码语义化
