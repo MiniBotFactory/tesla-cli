@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,29 @@ import (
 	"github.com/wmango/tesla-cli/internal/errs"
 	"github.com/wmango/tesla-cli/internal/output"
 )
+
+// classifyCommandError 根据 SDK 错误字符串特征,把签名命令的失败精确归类到
+// 退出码语义 + 给出可执行 hint。SDK 没暴露稳定错误码,只能 substring 匹配。
+func classifyCommandError(description string, err error) *errs.Error {
+	msg := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(msg, "offline") || strings.Contains(msg, "asleep") ||
+		strings.Contains(msg, "unavailable"):
+		return errs.Wrap(errs.ExitVehicleState, description, err).
+			WithHint("vehicle is sleeping; run `tesla vehicle wake` and retry after ~15s").
+			WithRetryable(true)
+	case strings.Contains(msg, "401") || strings.Contains(msg, "unauthorized"):
+		return errs.Wrap(errs.ExitAuth, description, err).
+			WithHint("token expired or invalid; run `tesla auth refresh`").
+			WithRetryable(true)
+	case strings.Contains(msg, "scope"):
+		return errs.Wrap(errs.ExitScope, description, err).
+			WithHint("missing OAuth scope; re-run `tesla auth login` with `vehicle_cmds` / `vehicle_charging_cmds`")
+	default:
+		return errs.Wrap(errs.ExitVirtualKey, description, err).
+			WithHint("ensure key pair exists (`tesla key generate`) and is paired with the vehicle (`tesla key pair-url`)")
+	}
+}
 
 // runVehicleAction 是所有"需要虚拟钥匙签名"的车辆指令共享的执行骨架:
 //
@@ -53,8 +77,7 @@ func runVehicleAction(
 		PrivateKeyPath: keyPath,
 		VIN:            vin,
 	}, action); err != nil {
-		return errs.Wrap(errs.ExitVirtualKey, description, err).
-			WithHint("ensure key pair exists (`tesla key generate`) and is paired with the vehicle (`tesla key pair-url`)")
+		return classifyCommandError(description, err)
 	}
 	env := output.Success(map[string]any{
 		"action":  description,
