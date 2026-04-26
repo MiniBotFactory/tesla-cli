@@ -1,0 +1,65 @@
+{
+  "count": 2,
+  "response": [
+    {
+      "access_type": "OWNER",
+      "api_version": 90,
+      "backseat_token": null,
+      "backseat_token_updated_at": null,
+      "ble_autopair_enrolled": false,
+      "calendar_enabled": true,
+      "color": null,
+      "command_signing": "required",
+      "device_type": "vehicle",
+      "display_name": "Test Car",
+      "granular_access": {
+        "hide_private": false
+      },
+      "id": 1234567890123456,
+      "id_s": "1234567890123456",
+      "in_service": false,
+      "mobile_access_disabled": false,
+      "option_codes": null,
+      "release_notes_supported": true,
+      "signing_gate": {
+        "enabled": true,
+        "min_version": 1
+      },
+      "state": "online",
+      "tokens": null,
+      "user_id": 1000001,
+      "vehicle_id": 9876543210987654,
+      "vin": "LRW0000000000000"
+    },
+    {
+      "asset_site_id": "05bc4284-a6ce-4e7b-84c4-45ca31141e76",
+      "components": {
+        "battery": false,
+        "grid": false,
+        "load_meter": false,
+        "market_type": "residential",
+        "solar": false,
+        "wall_connectors": [
+          {
+            "device_id": "670e59c4-5e04-4cc7-88c7-a19bb23fc56e",
+            "din": "1552466-02-I--PGT24233039281",
+            "is_active": true,
+            "part_number": "1552466-02-I",
+            "serial_number": "PGT24233039281"
+          }
+        ]
+      },
+      "device_type": "energy",
+      "energy_site_id": 1111111111111111,
+      "features": {},
+      "go_off_grid_test_banner_enabled": null,
+      "id": "STE00000000-00000-XX",
+      "powerwall_onboarding_settings_set": null,
+      "powerwall_tesla_electric_interested_in": null,
+      "resource_type": "wall_connector",
+      "storm_mode_enabled": null,
+      "vpp_tour_enabled": null,
+      "warp_site_number": "STE00000000-00000-XX"
+    }
+  ]
+}

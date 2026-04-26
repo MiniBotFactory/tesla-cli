@@ -32,10 +32,14 @@ type Config struct {
 }
 
 // DefaultConfig 返回内置默认值。任何字段都可被 flag/env/file 覆盖。
+//
+// Region 故意留空:cobra `--region` flag 也默认空,这样 cli 层
+// `firstNonEmpty(cfg.Region, values["region"], "na")` 才能让
+// config.toml 里的 region 接手;否则 builtin "na" 会盖住 toml。
 func DefaultConfig() Config {
 	return Config{
 		Profile: "default",
-		Region:  "na",
+		Region:  "",
 		Output:  "json",
 		Quiet:   false,
 		Verbose: 0,

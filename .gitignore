@@ -29,3 +29,7 @@ testdata/cache/
 
 # Claude Code 工作目录
 .claude/
+
+# 一次性 reproducer / 诊断小程序(Go 工具链已忽略下划线前缀目录,这里再保险一道)
+cmd/_*/
+

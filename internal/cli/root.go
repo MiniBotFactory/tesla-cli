@@ -73,7 +73,7 @@ func registerGlobalFlags(root *cobra.Command, v *viper.Viper) {
 	pf := root.PersistentFlags()
 
 	pf.String("profile", "default", "凭据 profile 名(支持多账号切换)")
-	pf.String("region", "na", "Tesla API 区域:na | eu | cn")
+	pf.String("region", "", "Tesla API 区域:na | eu | cn(默认从 config.toml 读;最终 fallback 到 na)")
 	pf.StringP("output", "o", "json", "输出格式:json | yaml | table | text")
 	pf.String("jq", "", "对输出再走一遍 jq 表达式(嵌入,免外部依赖)")
 	pf.Bool("raw", false, "不做后处理,原样回显 Tesla API 响应")

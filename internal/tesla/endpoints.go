@@ -39,12 +39,15 @@ var endpointsByRegion = map[string]Endpoints{
 		APIBase:      "https://fleet-api.prd.eu.vn.cloud.tesla.com",
 		OIDCMetadata: "https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/thirdparty/.well-known/openid-configuration",
 	},
+	// CN 区域:authorize / token 都在 auth.tesla.cn 主域(不走 fleet-auth 子域),
+	// OIDC discovery 在标准 .well-known 路径下。
+	// 实测 2026-04-26:client_credentials grant 已工作。
 	"cn": {
 		Region:       "cn",
 		AuthorizeURL: "https://auth.tesla.cn/oauth2/v3/authorize",
-		TokenURL:     "https://fleet-auth.prd.vn.cloud.tesla.cn/oauth2/v3/token",
+		TokenURL:     "https://auth.tesla.cn/oauth2/v3/token",
 		APIBase:      "https://fleet-api.prd.cn.vn.cloud.tesla.cn",
-		OIDCMetadata: "https://fleet-auth.prd.vn.cloud.tesla.cn/oauth2/v3/thirdparty/.well-known/openid-configuration",
+		OIDCMetadata: "https://auth.tesla.cn/oauth2/v3/.well-known/openid-configuration",
 	},
 }
 

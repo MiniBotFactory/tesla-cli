@@ -13,8 +13,8 @@ func TestDefaultConfig_sensibleDefaults(t *testing.T) {
 	if c.Profile != "default" {
 		t.Errorf("Profile default mismatch: %q", c.Profile)
 	}
-	if c.Region != "na" {
-		t.Errorf("Region default mismatch: %q", c.Region)
+	if c.Region != "" {
+		t.Errorf("Region default should be empty (let toml/flag take over), got %q", c.Region)
 	}
 	if c.Output != "json" {
 		t.Errorf("Output default mismatch: %q", c.Output)
