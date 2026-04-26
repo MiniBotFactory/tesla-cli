@@ -82,6 +82,7 @@ func newAuthLoginCommand(v *viper.Viper) *cobra.Command {
 			}
 			scopesArg, _ := cmd.Flags().GetString("scopes")
 			noBrowser, _ := cmd.Flags().GetBool("no-browser")
+			manualFlag, _ := cmd.Flags().GetBool("manual")
 			timeoutArg, _ := cmd.Flags().GetDuration("login-timeout")
 
 			scopes := strings.Fields(firstNonEmpty(scopesArg, values["scopes"]))
@@ -99,6 +100,8 @@ func newAuthLoginCommand(v *viper.Viper) *cobra.Command {
 				OpenBrowser:  !noBrowser,
 				Timeout:      timeoutArg,
 				Notify:       cmd.ErrOrStderr(),
+				Manual:       manualFlag,
+				Stdin:        cmd.InOrStdin(),
 			})
 			if err != nil {
 				return errs.Wrap(errs.ExitAuth, "login", err)
@@ -117,6 +120,7 @@ func newAuthLoginCommand(v *viper.Viper) *cobra.Command {
 	}
 	cmd.Flags().String("scopes", "", "覆盖配置里的 scopes(空格分隔)")
 	cmd.Flags().Bool("no-browser", false, "不自动打开浏览器,仅打印 URL")
+	cmd.Flags().Bool("manual", false, "强制 manual paste 模式(redirect_uri 非 localhost 时自动开启)")
 	cmd.Flags().Duration("login-timeout", 5*time.Minute, "等待用户授权的超时")
 	return cmd
 }

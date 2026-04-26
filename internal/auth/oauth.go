@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -32,6 +34,12 @@ type LoginOptions struct {
 	BindAddr     string        // 本地回调监听地址,默认 127.0.0.1
 	Timeout      time.Duration // 用户授权超时
 	Notify       io.Writer     // 通知输出器(一般是 stderr)
+
+	// Manual=true 时跳过本地回调 server,改为从 Stdin 读"被重定向后的完整 URL"
+	// (或 "code state" 字符串)。当 RedirectURI 不指向 localhost/127.0.0.1
+	// 时由 Login() 自动开启。
+	Manual bool
+	Stdin  io.Reader // manual 模式下的输入源,默认 os.Stdin
 }
 
 // RefreshOptions 是刷新 token 所需输入。
@@ -67,6 +75,15 @@ func Login(ctx context.Context, opts LoginOptions) (*Token, error) {
 	parsed, err := url.Parse(opts.RedirectURI)
 	if err != nil {
 		return nil, fmt.Errorf("oauth: parse redirect_uri: %w", err)
+	}
+
+	// 自动检测:redirect_uri 不指向 localhost/127.0.0.1 时,本地 callback server
+	// 永远收不到回调 — 切到 manual paste 模式。
+	if !opts.Manual && !isLoopbackHost(parsed.Hostname()) {
+		opts.Manual = true
+	}
+	if opts.Manual {
+		return loginManual(ctx, ep, opts, pk, state)
 	}
 	bind := opts.BindAddr
 	if bind == "" {
@@ -308,4 +325,97 @@ func openBrowser(target string) error {
 		cmd = exec.Command("xdg-open", target)
 	}
 	return cmd.Start()
+}
+
+// isLoopbackHost 判断主机名是否是回环地址(本地 callback 可达)。
+func isLoopbackHost(host string) bool {
+	switch host {
+	case "localhost", "127.0.0.1", "::1", "":
+		return true
+	}
+	return false
+}
+
+// loginManual 走"用户复制重定向 URL 粘贴回来"流程。
+// redirect_uri 是生产域名时(本地接不到 callback),由 Login 自动切到这里。
+func loginManual(ctx context.Context, ep tesla.Endpoints, opts LoginOptions, pk PKCE, state string) (*Token, error) {
+	authURL := buildAuthorizeURL(ep.AuthorizeURL, opts, pk, state)
+
+	notify := opts.Notify
+	if notify == nil {
+		notify = io.Discard
+	}
+	fmt.Fprintf(notify, "\n=== Manual paste mode ===\n")
+	fmt.Fprintf(notify, "redirect_uri (%s) is not loopback; CLI cannot receive the callback locally.\n\n", opts.RedirectURI)
+	fmt.Fprintf(notify, "1) Open this URL in your browser and complete authorization:\n\n  %s\n\n", authURL)
+	fmt.Fprintf(notify, "2) Your browser will be redirected to:\n     %s?code=...&state=...\n\n", opts.RedirectURI)
+	fmt.Fprintf(notify, "3) Paste the FULL redirected URL (or just \"<code> <state>\" separated by space):\n> ")
+
+	if opts.OpenBrowser {
+		_ = openBrowser(authURL)
+	}
+
+	in := opts.Stdin
+	if in == nil {
+		in = os.Stdin
+	}
+	line, err := bufio.NewReader(in).ReadString('\n')
+	if err != nil && line == "" {
+		return nil, fmt.Errorf("oauth: read paste: %w", err)
+	}
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return nil, errors.New("oauth: empty paste input")
+	}
+
+	code, gotState, err := parsePastedCallback(line)
+	if err != nil {
+		return nil, err
+	}
+	if gotState != "" && gotState != state {
+		return nil, fmt.Errorf("oauth: state mismatch (CSRF?): expected %q got %q", state, gotState)
+	}
+	if code == "" {
+		return nil, errors.New("oauth: no code in pasted input")
+	}
+
+	// 让上层调用方在异常 ctx 时能抢先返回。
+	if cerr := ctx.Err(); cerr != nil {
+		return nil, cerr
+	}
+	return exchangeCode(ctx, ep.TokenURL, opts, pk.Verifier, code)
+}
+
+// parsePastedCallback 接受三种形态:
+//
+//	a) 完整 URL:           https://example.com/code?code=ABC&state=XYZ
+//	b) query 片段:         ?code=ABC&state=XYZ
+//	c) 空格分隔:           ABC XYZ
+func parsePastedCallback(line string) (code, state string, err error) {
+	switch {
+	case strings.Contains(line, "://") || strings.HasPrefix(line, "?"):
+		raw := line
+		if strings.HasPrefix(raw, "?") {
+			raw = "https://x" + raw // 让 url.Parse 能消费
+		}
+		u, perr := url.Parse(raw)
+		if perr != nil {
+			return "", "", fmt.Errorf("oauth: parse pasted URL: %w", perr)
+		}
+		q := u.Query()
+		if e := q.Get("error"); e != "" {
+			return "", "", fmt.Errorf("oauth: provider error: %s (%s)", e, q.Get("error_description"))
+		}
+		return q.Get("code"), q.Get("state"), nil
+	default:
+		parts := strings.Fields(line)
+		if len(parts) == 0 {
+			return "", "", errors.New("oauth: empty input")
+		}
+		code = parts[0]
+		if len(parts) >= 2 {
+			state = parts[1]
+		}
+		return code, state, nil
+	}
 }
