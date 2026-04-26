@@ -40,6 +40,10 @@ func newVehicleCommand(v *viper.Viper) *cobra.Command {
 		newVehicleInfoCommand(v),
 		newVehicleDataCommand(v),
 		newVehicleWakeCommand(v),
+		newVehicleLockCommand(v),
+		newVehicleUnlockCommand(v),
+		newVehicleHonkCommand(v),
+		newVehicleFlashCommand(v),
 	)
 	return cmd
 }

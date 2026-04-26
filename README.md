@@ -1,4 +1,4 @@
-# tesla-cli
+# tesla-cli-cn
 
 Tesla Fleet API 命令行工具 — **为 Agent 调用而生**。
 
@@ -12,7 +12,8 @@ tesla
 ├── auth          login / logout / status / token / refresh / partner
 ├── key           generate / publish / pubkey / pair-url
 ├── config        init / set / get / path / show
-├── vehicle       list / info / data / wake
+├── vehicle       list / info / data / wake / lock / unlock / honk / flash
+├── charge        start / stop / limit
 ├── energy        list / info / live
 ├── docs          离线长文档 (auth-flow / virtual-key / cn-notes / agent-recipes / errors)
 ├── examples      命令示例

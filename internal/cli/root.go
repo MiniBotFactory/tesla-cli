@@ -62,6 +62,7 @@ func NewRootCommand() *cobra.Command {
 		newConfigCommand(v),
 		newAuthCommand(v),
 		newKeyCommand(v),
+		newChargeCommand(v),
 		newVehicleCommand(v),
 		newEnergyCommand(v),
 	)
